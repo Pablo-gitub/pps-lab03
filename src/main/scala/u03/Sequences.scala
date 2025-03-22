@@ -168,7 +168,14 @@ object Sequences: // Essentially, generic linkedlists
      * E.g., [10, 20, 30] => ([10], [20, 30]) if pred is (_ < 20)
      * E.g., [11, 20, 31] => ([20], [11, 31]) if pred is (_ % 2 == 0)
      */
-    def partition[A](s: Sequence[A])(pred: A => Boolean): (Sequence[A], Sequence[A]) = ???
+    def partition[A](s: Sequence[A])(pred: A => Boolean): (Sequence[A], Sequence[A]) = {
+      @tailrec
+      def partitionTail(s: Sequence[A], satisfyPredicate: Sequence[A], unsatisfiedPredicate: Sequence[A]): (Sequence[A], Sequence[A]) = (s, satisfyPredicate, unsatisfiedPredicate) match
+        case (Nil(), satisfyPredicate, unsatisfiedPredicate ) => (reverse(satisfyPredicate),reverse(unsatisfiedPredicate))
+        case (Cons(h,t), satisfyPredicate, unsatisfiedPredicate) if pred(h) => partitionTail(t, Cons(h,satisfyPredicate), unsatisfiedPredicate)
+        case (Cons(h,t), satisfyPredicate, unsatisfiedPredicate) if !pred(h) => partitionTail(t, satisfyPredicate, Cons(h,unsatisfiedPredicate))
+      partitionTail(s, Nil(), Nil())
+    }
 
   end Sequence
 end Sequences
