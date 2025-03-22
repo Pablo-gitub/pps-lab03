@@ -84,14 +84,30 @@ object Sequences: // Essentially, generic linkedlists
      * E.g., [10, 20, 30], calling with mapper(v => [v]) returns [10, 20, 30]
      * E.g., [10, 20, 30], calling with mapper(v => Nil()) returns []
      */
-    def flatMap[A, B](s: Sequence[A])(mapper: A => Sequence[B]): Sequence[B] = ???
+    def flatMap[A, B](s: Sequence[A])(mapper: A => Sequence[B]): Sequence[B] = s match
+      case Nil() => Nil()
+      case Cons(h, t) => concat(mapper(h), flatMap(t)(mapper))
+
 
     /*
      * Get the minimum element in the sequence
      * E.g., [30, 20, 10] => 10
      * E.g., [10, 1, 30] => 1
      */
-    def min(s: Sequence[Int]): Optional[Int] = ???
+    def min(s: Sequence[Int]): Optional[Int] = {
+      @tailrec
+      def minSaver(s: Sequence[Int], min: Optional[Int]): Optional[Int] = (s, min) match
+        case (Cons(h, t), Empty()) => minSaver(t,Just(h))
+        case (Nil(), min) => min
+        case (Cons(h, t), min) if !isEmpty(min) && h < orElse(min, 0) => minSaver(t, Just(h))
+        case (Cons(h, t), min) => minSaver(t, min)
+      
+      minSaver(s, Empty())
+    }
+      
+      
+      
+      
 
     /*
      * Get the elements at even indices
