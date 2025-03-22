@@ -120,7 +120,7 @@ object Sequences: // Essentially, generic linkedlists
 
       evenIndicesAcc(s, Nil(), true)
     }
-      
+
 
     /*
      * Check if the sequence contains the element
@@ -138,7 +138,14 @@ object Sequences: // Essentially, generic linkedlists
      * E.g., [10, 20, 10, 30] => [10, 20, 30]
      * E.g., [10, 20, 30] => [10, 20, 30]
      */
-    def distinct[A](s: Sequence[A]): Sequence[A] = ???
+    def distinct[A](s: Sequence[A]): Sequence[A] = {
+      @tailrec
+      def delete(s: Sequence[A], unique: Sequence[A]): Sequence[A] = (s, unique) match
+        case (Cons(h,t), unique) if contains(unique)(h) => delete(t, unique)
+        case (Cons(h,t), unique) if !contains(unique)(h) => delete(t, Cons(h, unique))
+        case _ => reverse(unique)
+      delete(s, Nil())
+    }
 
     /*
      * Group contiguous elements in the sequence
@@ -146,7 +153,15 @@ object Sequences: // Essentially, generic linkedlists
      * E.g., [10, 20, 30] => [[10], [20], [30]]
      * E.g., [10, 20, 20, 30] => [[10], [20, 20], [30]]
      */
-    def group[A](s: Sequence[A]): Sequence[Sequence[A]] = ???
+    def group[A](s: Sequence[A]): Sequence[Sequence[A]] = {
+      @tailrec
+      def groupTail(s: Sequence[A], out: Sequence[Sequence[A]]): Sequence[Sequence[A]] = (s, out) match
+        case (Nil(), out) => reverse(out)
+        case (Cons(h1, Cons(h11, t1)), Cons(Cons(h2, t2), t3)) if h1 == h2 => groupTail(Cons(h11, t1), Cons(Cons(h1, Cons(h2,t2)),t3))
+        case (Cons(h1, Cons(h11, t1)), Cons(Cons(h2, t2), t3)) if h1 != h2 => groupTail(Cons(h11, t1), Cons(Cons(h1, Nil()), Cons(Cons(h2, t2), t3)))
+        case (Cons(h, t), out) => groupTail(t, Cons(Cons(h,Nil()), out))
+      groupTail(s, Nil())
+    }
 
     /*
      * Partition the sequence into two sequences based on the predicate
