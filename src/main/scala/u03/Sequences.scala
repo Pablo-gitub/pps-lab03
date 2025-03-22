@@ -101,20 +101,26 @@ object Sequences: // Essentially, generic linkedlists
         case (Nil(), min) => min
         case (Cons(h, t), min) if !isEmpty(min) && h < orElse(min, 0) => minSaver(t, Just(h))
         case (Cons(h, t), min) => minSaver(t, min)
-      
+
       minSaver(s, Empty())
     }
-      
-      
-      
-      
+
 
     /*
      * Get the elements at even indices
      * E.g., [10, 20, 30] => [10, 30]
      * E.g., [10, 20, 30, 40] => [10, 30]
      */
-    def evenIndices[A](s: Sequence[A]): Sequence[A] = ???
+    def evenIndices[A](s: Sequence[A]): Sequence[A] = {
+      @tailrec
+      def evenIndicesAcc[A](s: Sequence[A], out: Sequence[A], even: Boolean): Sequence[A] = (s, out, even) match
+        case (Cons(h,t), out, even) if even => evenIndicesAcc(t, Cons(h, out), false)
+        case (Cons(h,t), out, even) if !even => evenIndicesAcc(t, out, true)
+        case _ => reverse(out)
+
+      evenIndicesAcc(s, Nil(), true)
+    }
+      
 
     /*
      * Check if the sequence contains the element
