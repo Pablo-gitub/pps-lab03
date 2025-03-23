@@ -1,0 +1,263 @@
+package u03
+
+
+import u02.Modules.{Person, isStudent}
+import u03.Optionals.Optional
+import u03.Optionals.Optional.*
+
+import scala.annotation.tailrec
+
+class Lab03
+
+object Lab03:
+  // Lab 03
+
+
+  object Sequences: // Essentially, generic linkedlists
+
+    enum Sequence[E]:
+      case Cons(head: E, tail: Sequence[E])
+      case Nil()
+
+    object Sequence:
+
+      // Task 1
+
+      /*
+       * Skip the first n elements of the sequence
+       * E.g., [10, 20, 30], 2 => [30]
+       * E.g., [10, 20, 30], 3 => []
+       * E.g., [10, 20, 30], 0 => [10, 20, 30]
+       * E.g., [], 2 => []
+       */
+      @tailrec
+      def skip[A](s: Sequence[A])(n: Int): Sequence[A] = s match
+        case Cons(h, t) if n > 0 => skip(t)(n - 1)
+        case _ => s
+
+      /*
+       * Zip two sequences
+       * E.g., [10, 20, 30], [40, 50] => [(10, 40), (20, 50)]
+       * E.g., [10], [] => []
+       * E.g., [], [] => []
+       */
+      def zip[A, B](first: Sequence[A], second: Sequence[B]): Sequence[(A, B)] = (first, second) match
+        case (Cons(h1, t1), Cons(h2, t2)) => Cons((h1, h2), zip(t1, t2))
+        case _ => Nil()
+
+      /*
+       * Concatenate two sequences
+       * E.g., [10, 20, 30], [40, 50] => [10, 20, 30, 40, 50]
+       * E.g., [10], [] => [10]
+       * E.g., [], [] => []
+       */
+      def concat[A](s1: Sequence[A], s2: Sequence[A]): Sequence[A] = (s1, s2) match
+        case (Nil(), _) => s2
+        case (_, Nil()) => s1
+        case (Cons(h1, t1), Cons(h2, t2)) => Cons(h1, concat(t1, s2))
+
+
+      /*
+       * Reverse the sequence
+       * E.g., [10, 20, 30] => [30, 20, 10]
+       * E.g., [10] => [10]
+       * E.g., [] => []
+       */
+      def reverse[A](s: Sequence[A]): Sequence[A] = {
+        @tailrec
+        def reverseAcc(s: Sequence[A], acc: Sequence[A]): Sequence[A] = (s, acc) match
+          case (Nil(), _) => acc
+          case (Cons(h1, Nil()), acc) => Cons(h1, acc)
+          case (Cons(h1, t1), Nil()) => reverseAcc(t1, Cons(h1, Nil()))
+          case (Cons(h1, t1), acc) => reverseAcc(t1, Cons(h1, acc))
+
+        reverseAcc(s, Nil())
+      }
+
+      /*
+       * Map the elements of the sequence to a new sequence and flatten the result
+       * E.g., [10, 20, 30], calling with mapper(v => [v, v + 1]) returns [10, 11, 20, 21, 30, 31]
+       * E.g., [10, 20, 30], calling with mapper(v => [v]) returns [10, 20, 30]
+       * E.g., [10, 20, 30], calling with mapper(v => Nil()) returns []
+       */
+      def flatMap[A, B](s: Sequence[A])(mapper: A => Sequence[B]): Sequence[B] = s match
+        case Nil() => Nil()
+        case Cons(h, t) => concat(mapper(h), flatMap(t)(mapper))
+
+
+      /*
+       * Get the minimum element in the sequence
+       * E.g., [30, 20, 10] => 10
+       * E.g., [10, 1, 30] => 1
+       */
+      def min(s: Sequence[Int]): Optional[Int] = {
+        @tailrec
+        def minSaver(s: Sequence[Int], min: Optional[Int]): Optional[Int] = (s, min) match
+          case (Cons(h, t), Empty()) => minSaver(t, Just(h))
+          case (Nil(), min) => min
+          case (Cons(h, t), min) if !isEmpty(min) && h < orElse(min, 0) => minSaver(t, Just(h))
+          case (Cons(h, t), min) => minSaver(t, min)
+
+        minSaver(s, Empty())
+      }
+
+
+      /*
+       * Get the elements at even indices
+       * E.g., [10, 20, 30] => [10, 30]
+       * E.g., [10, 20, 30, 40] => [10, 30]
+       */
+      def evenIndices[A](s: Sequence[A]): Sequence[A] = {
+        @tailrec
+        def evenIndicesAcc[A](s: Sequence[A], out: Sequence[A], even: Boolean): Sequence[A] = (s, out, even) match
+          case (Cons(h, t), out, even) if even => evenIndicesAcc(t, Cons(h, out), false)
+          case (Cons(h, t), out, even) if !even => evenIndicesAcc(t, out, true)
+          case _ => reverse(out)
+
+        evenIndicesAcc(s, Nil(), true)
+      }
+
+
+      /*
+       * Check if the sequence contains the element
+       * E.g., [10, 20, 30] => true if elem is 20
+       * E.g., [10, 20, 30] => false if elem is 40
+       */
+      @tailrec
+      def contains[A](s: Sequence[A])(elem: A): Boolean = s match
+        case Cons(h, t) if h == elem => true
+        case Cons(h, t) if h != elem => contains(t)(elem)
+        case _ => false
+
+      /*
+       * Remove duplicates from the sequence
+       * E.g., [10, 20, 10, 30] => [10, 20, 30]
+       * E.g., [10, 20, 30] => [10, 20, 30]
+       */
+      def distinct[A](s: Sequence[A]): Sequence[A] = {
+        @tailrec
+        def delete(s: Sequence[A], unique: Sequence[A]): Sequence[A] = (s, unique) match
+          case (Cons(h, t), unique) if contains(unique)(h) => delete(t, unique)
+          case (Cons(h, t), unique) if !contains(unique)(h) => delete(t, Cons(h, unique))
+          case _ => reverse(unique)
+
+        delete(s, Nil())
+      }
+
+      /*
+       * Group contiguous elements in the sequence
+       * E.g., [10, 10, 20, 30] => [[10, 10], [20], [30]]
+       * E.g., [10, 20, 30] => [[10], [20], [30]]
+       * E.g., [10, 20, 20, 30] => [[10], [20, 20], [30]]
+       */
+      def group[A](s: Sequence[A]): Sequence[Sequence[A]] = {
+        @tailrec
+        def groupTail(s: Sequence[A], out: Sequence[Sequence[A]]): Sequence[Sequence[A]] = (s, out) match
+          case (Nil(), out) => reverse(out)
+          case (Cons(h1, Cons(h11, t1)), Cons(Cons(h2, t2), t3)) if h1 == h2 => groupTail(Cons(h11, t1), Cons(Cons(h1, Cons(h2, t2)), t3))
+          case (Cons(h1, Cons(h11, t1)), Cons(Cons(h2, t2), t3)) if h1 != h2 => groupTail(Cons(h11, t1), Cons(Cons(h1, Nil()), Cons(Cons(h2, t2), t3)))
+          case (Cons(h, t), out) => groupTail(t, Cons(Cons(h, Nil()), out))
+
+        groupTail(s, Nil())
+      }
+
+      /*
+       * Partition the sequence into two sequences based on the predicate
+       * E.g., [10, 20, 30] => ([10], [20, 30]) if pred is (_ < 20)
+       * E.g., [11, 20, 31] => ([20], [11, 31]) if pred is (_ % 2 == 0)
+       */
+      def partition[A](s: Sequence[A])(pred: A => Boolean): (Sequence[A], Sequence[A]) = {
+        @tailrec
+        def partitionTail(s: Sequence[A], satisfyPredicate: Sequence[A], unsatisfiedPredicate: Sequence[A]): (Sequence[A], Sequence[A]) = (s, satisfyPredicate, unsatisfiedPredicate) match
+          case (Nil(), satisfyPredicate, unsatisfiedPredicate) => (reverse(satisfyPredicate), reverse(unsatisfiedPredicate))
+          case (Cons(h, t), satisfyPredicate, unsatisfiedPredicate) if pred(h) => partitionTail(t, Cons(h, satisfyPredicate), unsatisfiedPredicate)
+          case (Cons(h, t), satisfyPredicate, unsatisfiedPredicate) if !pred(h) => partitionTail(t, satisfyPredicate, Cons(h, unsatisfiedPredicate))
+
+        partitionTail(s, Nil(), Nil())
+      }
+      
+      //Task 2
+
+      def coursesOfTeachers(s: Sequence[Person]): Sequence[String] = s match
+        case s => flatMap(s) {
+          case Person.Teacher(_, course) => Cons(course, Nil())
+          case _ => Nil()
+        }
+
+      @tailrec
+      def foldLeft[A, B](s: Sequence[A])(initial: B)(op: (B, A) => B): B = s match
+        case Nil() => initial
+        case Cons(h, t) => foldLeft(t)(op(initial, h))(op)
+
+      def totalTaughtCourses(s: Sequence[Person]): Int = {
+        val courses: Sequence[String] = coursesOfTeachers(s)
+
+        @tailrec
+        def counter(courses: Sequence[String], cont: Int): Int = (courses, cont) match
+          case (Cons(h, t), cont) => counter(t, cont + 1)
+          case _ => cont
+
+        counter(courses, 0)
+      }
+
+      def takeWhile[A](s: Sequence[A])(pred: A => Boolean): Sequence[A] = s match
+        case Cons(h, t) if pred(h) => Cons(h, takeWhile(t)(pred))
+        case _ => Nil()
+
+
+    end Sequence
+  end Sequences
+
+  object Streams extends App:
+
+    import Sequences.*
+
+    enum Stream[A]:
+      private case Empty()
+      private case Cons(head: () => A, tail: () => Stream[A])
+
+    object Stream:
+
+      def empty[A](): Stream[A] = Empty()
+
+      def cons[A](hd: => A, tl: => Stream[A]): Stream[A] =
+        lazy val head = hd
+        lazy val tail = tl
+        Cons(() => head, () => tail)
+
+
+      // Task 3
+
+      def takeWhile[A](stream: Stream[A])(pred: A => Boolean): Stream[A] = stream match
+        case Cons(head, tail) if pred(head()) => cons(head(), takeWhile(tail())(pred))
+        case _ => Empty()
+
+      def interleave[A](stream1: Stream[A], stream2: Stream[A]): Stream[A] = (stream1, stream2) match
+        case (Cons(h1, t1), Cons(h2, t2)) => cons(h1(), cons(h2(), interleave(t1(), t2())))
+        case (Cons(h1, t1), _) => cons(h1(), interleave(t1(), empty()))
+        case (_, Cons(h2, t2)) => cons(h2(), interleave(empty(), t2()))
+        case _ => empty()
+
+      def fill[A](quantity: Int)(value: A): Stream[A] = quantity match
+        case quantity if quantity > 0 => cons(value, fill(quantity - 1)(value))
+        case _ => empty()
+
+      def fibonacci: Stream[Int] = {
+        def fibTai(a: Int, b: Int): Stream[Int] =
+          cons(a, fibTai(b, a + b))
+
+        fibTai(0, 1)
+      }
+
+      def cycle[A](lst: Sequence[A]): Stream[A] = {
+        def loopStream(temp: Sequence[A]): Stream[A] = temp match
+          case Sequence.Nil() => loopStream(lst)
+          case Sequence.Cons(h, t) => cons(h, loopStream(t))
+
+        loopStream(lst)
+      }
+
+    end Stream
+  end Streams
+
+  
