@@ -56,9 +56,16 @@ object Streams extends App:
       case _ => empty()
 
     def fibonacci: Stream[Int] = {
-      def fibTai(a: Int, b: Int): Stream[Int] = 
+      def fibTai(a: Int, b: Int): Stream[Int] =
         cons(a, fibTai(b, a + b))
       fibTai(0, 1)
+    }
+
+    def cycle[A](lst: Sequence[A]): Stream[A] = {
+      def loopStream(temp:  Sequence[A]): Stream[A] = temp match
+        case Sequence.Nil() => loopStream(lst)
+        case Sequence.Cons(h, t) => cons(h, loopStream(t))
+      loopStream(lst)
     }
 
   end Stream
