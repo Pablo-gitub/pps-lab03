@@ -4,6 +4,9 @@ import Optionals.Optional.*
 import extensionmethods.Sequences.*
 import org.junit.*
 import org.junit.Assert.*
+import u02.Modules.Person
+import u02.Modules.Person.{Student, Teacher}
+import u03.extensionmethods.Streams.Stream.toList
 
 class SequenceTest:
   import u03.Sequences.*
@@ -85,5 +88,37 @@ class SequenceTest:
     val (evenEmpty, oddEmpty) = partition(emptySequence)(x => true)
     assertEquals(Nil(), evenEmpty)
     assertEquals(Nil(), oddEmpty)
+
+  @Test def testCoursesOfTeachers() =
+    val persons: Sequence[Person] =
+      Cons(Teacher("Alice", "Mathematics"),
+        Cons(Student("Bob", 2015),
+          Cons(Teacher("Carlo", "History"),
+            Nil())))
+    val courses: Sequence[String] = coursesOfTeachers(persons)
+    val expected: Sequence[String] = Cons("Mathematics", Cons("History", Nil()))
+    assertEquals(expected, courses)
+
+  @Test def testFoldLeft() =
+    val lst: Sequence[Int] = Cons(3, Cons(7, Cons(1, Cons(5, Nil()))))
+    assertEquals(16, foldLeft(lst)(0)(_ + _))
+    assertEquals(-16, foldLeft(lst)(0)(_ - _))
+
+  @Test def testTotalTaughtCourses() =
+    val persons: Sequence[Person] =
+      Cons(Teacher("Alice", "Mathematics"),
+        Cons(Student("Bob", 2015),
+          Cons(Teacher("Carlo", "History"),
+            Nil())))
+    val courses: Int = totalTaughtCourses(persons)
+    val expected: Int = 2
+    assertEquals(expected, courses)
+
+  @Test def testTakeWhile() =
+    val seq: Sequence[Int] = Cons(0, Cons(1, Cons(2, Cons(3, Cons(4, Cons(5, Nil()))))))
+    val result: Sequence[Int] = takeWhile(seq)(_ < 5)
+    val expected: Sequence[Int] = Cons(0, Cons(1, Cons(2, Cons(3, Cons(4, Nil())))))
+    assertEquals(expected, result)
+
 
 end SequenceTest

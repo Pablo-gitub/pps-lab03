@@ -1,5 +1,6 @@
 package u03
 
+import u02.Modules.{Person, isStudent}
 import u03.Optionals.Optional
 import u03.Optionals.Optional.*
 
@@ -176,6 +177,32 @@ object Sequences: // Essentially, generic linkedlists
         case (Cons(h,t), satisfyPredicate, unsatisfiedPredicate) if !pred(h) => partitionTail(t, satisfyPredicate, Cons(h,unsatisfiedPredicate))
       partitionTail(s, Nil(), Nil())
     }
+
+    def coursesOfTeachers(s: Sequence[Person]): Sequence[String] = s match
+      case s => flatMap(s) {
+        case Person.Teacher(_, course) => Cons(course, Nil())
+        case _ => Nil()
+      }
+
+    @tailrec
+    def foldLeft[A,B](s: Sequence[A])(initial: B)(op:(B,A) => B): B = s match
+      case Nil() => initial
+      case Cons(h, t) => foldLeft(t)(op(initial,h))(op)
+
+    def totalTaughtCourses(s: Sequence[Person]): Int = {
+      val courses: Sequence[String] = coursesOfTeachers(s)
+      @tailrec
+      def counter(courses: Sequence[String], cont: Int): Int = (courses, cont) match
+        case (Cons(h,t), cont) => counter(t, cont+1)
+        case _ => cont
+
+      counter(courses, 0)
+    }
+
+    def takeWhile[A](s: Sequence[A])(pred: A => Boolean): Sequence[A] = s match
+      case Cons(h, t) if pred(h) => Cons(h, takeWhile(t)(pred))
+      case _ => Nil()
+
 
   end Sequence
 end Sequences
