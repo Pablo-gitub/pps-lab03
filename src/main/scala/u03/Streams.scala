@@ -1,5 +1,7 @@
 package u03
 
+import scala.compiletime.ops.string.Length
+
 object Streams extends App:
 
   import Sequences.*
@@ -48,6 +50,17 @@ object Streams extends App:
       case (Cons(h1, t1), _) => cons(h1(), interleave(t1(), empty()))
       case (_, Cons(h2, t2)) => cons(h2(), interleave(empty(), t2()))
       case _ => empty()
+
+    def fill[A](quantity: Int)(value: A): Stream[A] = quantity match
+      case quantity if quantity > 0 => cons(value, fill(quantity-1)(value))
+      case _ => empty()
+
+    def fibonacci: Stream[Int] = {
+      def fibTai(a: Int, b: Int): Stream[Int] = 
+        cons(a, fibTai(b, a + b))
+      fibTai(0, 1)
+    }
+
   end Stream
 end Streams
 
